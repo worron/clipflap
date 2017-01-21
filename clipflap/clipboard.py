@@ -69,6 +69,8 @@ class HistoryWindow(Gtk.ApplicationWindow):
 			else:
 				self.search.set_text("")
 				self.on_search_activated()
+		elif event.keyval == Gdk.KEY_f and (event.state & Gdk.ModifierType.CONTROL_MASK):
+			self.search.grab_focus()
 
 	def _rebuild_store(self):
 		self.treeview.set_model(None)
