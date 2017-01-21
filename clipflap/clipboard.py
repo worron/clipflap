@@ -156,6 +156,7 @@ class Clipboard(Gtk.Application):
 
 		# command line args
 		self.add_main_option("show", 0, GLib.OptionFlags.NONE, GLib.OptionArg.NONE, "Show buffer history", None)
+		self.add_main_option("clear", 0, GLib.OptionFlags.NONE, GLib.OptionArg.NONE, "Clear buffer history", None)
 		self.add_main_option("quit", 0, GLib.OptionFlags.NONE, GLib.OptionArg.NONE, "Exit program", None)
 
 	def do_startup(self):
@@ -168,9 +169,10 @@ class Clipboard(Gtk.Application):
 
 		# menu
 		self.menu = Gtk.Menu()
-		quit_item = Gtk.MenuItem(label="Quit")
-		quit_item.connect("activate", self.on_quit)
-		self.menu.append(quit_item)
+		for label, handler in (["Clear", self.on_clear], ["Quit", self.on_quit]):
+			item = Gtk.MenuItem(label=label)
+			item.connect("activate", handler)
+			self.menu.append(item)
 		self.menu.show_all()
 
 	def do_activate(self):
@@ -186,10 +188,9 @@ class Clipboard(Gtk.Application):
 			self.activate()
 
 		options = command_line.get_options_dict()
-		if options.contains("show"):
-			self.window.show_history()
-		if options.contains("quit"):
-			self.on_quit()
+		for arg in [a for a in ("show", "clear", "quit") if options.contains(a)]:
+			action = getattr(self, "on_%s" % arg)
+			action()
 		return 0
 
 	def on_tray_right_click(self, icon, button, time):
@@ -197,6 +198,13 @@ class Clipboard(Gtk.Application):
 
 	def on_tray_left_click(self, *args):
 		self.window.show_history()
+
+	def on_show(self, *args):
+		self.window.show_history()
+
+	def on_clear(self, *args):
+		self.window.data = []
+		self.window._rebuild_store()
 
 	def on_quit(self, *args):
 		self.quit()
