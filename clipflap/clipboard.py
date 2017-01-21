@@ -40,6 +40,7 @@ class HistoryWindow(Gtk.ApplicationWindow):
 
 		# view
 		self.treeview = Gtk.TreeView(headers_visible=False)
+		self.selection = self.treeview.get_selection()
 		self.scrollable = Gtk.ScrolledWindow()
 		self.scrollable.add(self.treeview)
 
@@ -71,6 +72,15 @@ class HistoryWindow(Gtk.ApplicationWindow):
 				self.on_search_activated()
 		elif event.keyval == Gdk.KEY_f and (event.state & Gdk.ModifierType.CONTROL_MASK):
 			self.search.grab_focus()
+		elif event.keyval == Gdk.KEY_Delete:
+			self._delete_item()
+
+	def _delete_item(self):
+		model, treeiter = self.selection.get_selected()
+		if treeiter is not None:
+			text = self.filtered[treeiter][0]
+			self.data.remove(text)
+			self._rebuild_store()
 
 	def _rebuild_store(self):
 		self.treeview.set_model(None)
