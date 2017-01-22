@@ -18,6 +18,7 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		self.data = []
 		self.search_text = ""
 		self.bsize = 100
+		self.autosave = 5 * 60 * 1000
 
 		# window settings
 		self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
@@ -62,6 +63,7 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		self.search.connect("activate", self.on_search_activated)
 		self.treeview.connect("row_activated", self.on_item_activated)
 		self.clipboard.connect("owner-change", self.on_buffer_change)
+		GLib.timeout_add(self.autosave, self.save_history)
 
 	def _on_key_press(self, widget, event):
 		if event.keyval == Gdk.KEY_Escape:
