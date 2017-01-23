@@ -19,11 +19,15 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		self.search_text = ""
 		self.bsize = 100
 		self.autosave = 5 * 60 * 1000
+		self.size = (400, 400)
 
 		# window settings
 		self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
-		self.set_default_size(400, 400)
+		self.set_default_size(*self.size)
 		self.set_keep_above(True)
+
+		screen = self.get_screen()
+		self.move((screen.get_width() - self.size[0]) / 2, (screen.get_height() - self.size[0]) / 2)
 
 		# history storage
 		self.path = os.path.expanduser("~/.config/clipflap")
@@ -95,12 +99,6 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		if len(self.filtered) > 0:
 			self.treeview.set_cursor(0)
 
-	def _place_under_cursor(self):
-		screen = self.get_screen()
-		_, x, y, _ = screen.get_root_window().get_pointer()
-		dx, dy = [size + 10 for size in self.get_size()]
-		self.move(min(x, screen.get_width() - dx), min(y, screen.get_height() - dy))
-
 	def on_buffer_change(self, clipboard, event):
 		text = self.clipboard.wait_for_text()
 		if text is not None:
@@ -131,7 +129,6 @@ class HistoryWindow(Gtk.ApplicationWindow):
 			return self.search_text.lower() in model[treeiter][0].lower()
 
 	def show_history(self):
-		self._place_under_cursor()
 		self._rebuild_store()
 		self.show_all()
 		self.treeview.grab_focus()
