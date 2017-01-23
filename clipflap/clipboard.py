@@ -61,9 +61,6 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		self.set_skip_taskbar_hint(True)
 		self.set_keep_above(True)
 
-		screen = self.get_screen()
-		self.move((screen.get_width() - self.size[0]) / 2, (screen.get_height() - self.size[0]) / 2)
-
 		# clipboard
 		self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 
@@ -130,6 +127,10 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		if len(self.filtered) > 0:
 			self.treeview.set_cursor(0)
 
+	def _place_on_center(self):
+		screen = self.get_screen()
+		self.move((screen.get_width() - self.size[0]) / 2, (screen.get_height() - self.size[0]) / 2)
+
 	def on_buffer_change(self, clipboard, event):
 		text = self.clipboard.wait_for_text()
 		if text is not None:
@@ -161,6 +162,7 @@ class HistoryWindow(Gtk.ApplicationWindow):
 
 	def show_history(self):
 		self._rebuild_store()
+		self._place_on_center()  # temporary fix
 		self.show_all()
 		self.treeview.grab_focus()
 
