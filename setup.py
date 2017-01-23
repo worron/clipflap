@@ -4,7 +4,7 @@
 """
 Installation routines.
 Install:
-$ python3 setup.py install --record log.txt
+$ python3 setup.py install
 Uninstall:
 $ cat log.txt | xargs rm -rf
 """
@@ -13,7 +13,7 @@ from setuptools import setup
 
 setup(
 	name = "clipflap",
-	version = "0.8.dev1",
+	version = "1.0",
 	description = "Clipboard history widget",
 	LICENSE = "GPL",
 	author = "worron",
@@ -25,4 +25,7 @@ setup(
 	entry_points = {
 		"console_scripts": ["clipflap=clipflap.clipboard:run"],
 	},
+	data_files=[
+		("share/icons/hicolor/scalable/apps", ["clipflap/data/clipflap.svg"]),
+	],
 )

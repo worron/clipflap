@@ -58,6 +58,7 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		# window settings
 		self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
 		self.set_default_size(*self.size)
+		self.set_skip_taskbar_hint(True)
 		self.set_keep_above(True)
 
 		screen = self.get_screen()
@@ -192,7 +193,14 @@ class Clipboard(Gtk.Application):
 		Gtk.Application.do_startup(self)
 
 		# tray icon
-		self.trayicon = Gtk.StatusIcon(stock=Gtk.STOCK_ABOUT)
+		icon_name = "clipflap"
+		icon_theme = Gtk.IconTheme.get_default()
+		if icon_theme.has_icon(icon_name):
+			tray_pb = icon_theme.load_icon(icon_name, 48, 0)
+			self.trayicon = Gtk.StatusIcon(pixbuf=tray_pb)
+		else:
+			self.trayicon = Gtk.StatusIcon(stock=Gtk.STOCK_EDIT)
+
 		self.trayicon.connect('popup-menu', self.on_tray_right_click)
 		self.trayicon.connect('activate', self.on_tray_left_click)
 
