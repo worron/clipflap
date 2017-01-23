@@ -21,7 +21,7 @@ setup(
 	# url =
 	packages=["clipflap"],
 	install_requires = ["setuptools"],
-	# package_data =
+	package_data = {"cavalcade.data": ["*.ini", "*.svg"]},
 	entry_points = {
 		"console_scripts": ["clipflap=clipflap.clipboard:run"],
 	},

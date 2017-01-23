@@ -4,10 +4,32 @@
 import os
 import sys
 import pickle
+import shutil
+from configparser import ConfigParser
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GLib, Gio, Pango
+
+
+class Config(ConfigParser):
+	"""
+	Config settings manager.
+	No data validation, be careful while config editing.
+	"""
+	def __init__(self, path):
+		self.name = "config.ini"
+		self.path = path
+		self._setup()
+
+		super().__init__()
+		self.read(self.configfile)
+
+	def _setup(self):
+		self.default_configfile = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", self.name)
+		self.configfile = os.path.join(self.path, self.name)
+		if not os.path.isfile(self.configfile):
+			shutil.copyfile(self.default_configfile, self.configfile)
 
 
 class HistoryWindow(Gtk.ApplicationWindow):
@@ -15,11 +37,23 @@ class HistoryWindow(Gtk.ApplicationWindow):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 
+		# storage directory
+		self.path = os.path.expanduser("~/.config/clipflap")
+		if not os.path.exists(self.path):
+			os.makedirs(self.path)
+
+		# config
+		self.config = Config(self.path)
+
+		# history file
+		self.datafile = os.path.join(self.path, "history.pkl")
+
+		# base settings
 		self.data = []
 		self.search_text = ""
-		self.bsize = 100
-		self.autosave = 5 * 60 * 1000
-		self.size = (400, 400)
+		self.bsize = int(self.config["Clipboard"]["size"])
+		self.autosave = int(self.config["Clipboard"]["autosave"])
+		self.size = (int(self.config["Window"]["width"]), int(self.config["Window"]["height"]))
 
 		# window settings
 		self.set_type_hint(Gdk.WindowTypeHint.DIALOG)
@@ -28,12 +62,6 @@ class HistoryWindow(Gtk.ApplicationWindow):
 
 		screen = self.get_screen()
 		self.move((screen.get_width() - self.size[0]) / 2, (screen.get_height() - self.size[0]) / 2)
-
-		# history storage
-		self.path = os.path.expanduser("~/.config/clipflap")
-		if not os.path.exists(self.path):
-			os.makedirs(self.path)
-		self.datafile = os.path.join(self.path, "history.pkl")
 
 		# clipboard
 		self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
@@ -67,7 +95,9 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		self.search.connect("activate", self.on_search_activated)
 		self.treeview.connect("row_activated", self.on_item_activated)
 		self.clipboard.connect("owner-change", self.on_buffer_change)
-		GLib.timeout_add(self.autosave, self.save_history)
+
+		if self.autosave > 0:
+			GLib.timeout_add(self.autosave, self.save_history)
 
 	def _on_key_press(self, widget, event):
 		if event.keyval == Gdk.KEY_Escape:
