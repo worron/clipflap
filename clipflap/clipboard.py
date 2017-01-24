@@ -80,10 +80,13 @@ class HistoryWindow(Gtk.ApplicationWindow):
 
 		# search
 		self.search = Gtk.SearchEntry()
+		self.search.set_size_request(self.size[0] - 20, -1)  # fix this
+		self.searchbar = Gtk.SearchBar()
+		self.searchbar.add(self.search)
 
 		# pack
 		box = Gtk.Box(spacing=12, orientation=Gtk.Orientation.VERTICAL, margin=4)
-		box.pack_start(self.search, False, True, 0)
+		box.pack_start(self.searchbar, False, True, 0)
 		box.pack_end(self.scrollable, True, True, 0)
 		self.add(box)
 
@@ -115,9 +118,13 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		else:
 			self.search.set_text("")
 			self.on_search_activated()
+			self.searchbar.set_search_mode(False)
 
 	def _on_search_key(self, *args):
-		self.search.grab_focus()
+		if not self.searchbar.get_search_mode():
+			self.searchbar.set_search_mode(True)
+		else:
+			self.search.grab_focus()
 
 	def _on_delete_key(self, *args):
 		self._delete_item()
@@ -186,6 +193,9 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		self.treeview.grab_focus()
 
 	def hide_history(self, *args):
+		self.search.set_text("")
+		self.on_search_activated()
+		self.searchbar.set_search_mode(False)
 		self.hide()
 		return True
 
