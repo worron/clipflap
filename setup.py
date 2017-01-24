@@ -18,13 +18,16 @@ setup(
 	LICENSE = "GPL",
 	author = "worron",
 	author_email = "worrongm@gmail.com",
-	# url =
+	url = "https://github.com/worron/clipflap",
 	packages=["clipflap"],
 	install_requires = ["setuptools"],
 	package_data = {"cavalcade.data": ["*.ini", "*.svg"]},
 	entry_points = {
 		"console_scripts": ["clipflap=clipflap.clipboard:run"],
 	},
+
+	# Note that these files are only installed correctly if
+	# --single-version-externally-managed is used as argument to "setup.py install".
 	data_files=[
 		("share/icons/hicolor/scalable/apps", ["clipflap/data/clipflap.svg"]),
 	],

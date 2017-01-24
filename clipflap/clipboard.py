@@ -196,7 +196,7 @@ class HistoryWindow(Gtk.ApplicationWindow):
 class Clipboard(Gtk.Application):
 	"""Clipboard history application"""
 	def __init__(self):
-		super().__init__(flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE, application_id="apps.clipflap")
+		super().__init__(flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE, application_id="com.github.worron.clipflap")
 		self.window = None
 
 		# command line args
