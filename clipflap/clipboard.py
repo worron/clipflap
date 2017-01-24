@@ -87,27 +87,40 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		box.pack_end(self.scrollable, True, True, 0)
 		self.add(box)
 
+		# accelerators
+		self.accelerators = Gtk.AccelGroup()
+		self.add_accel_group(self.accelerators)
+		for keyname, value in self.config["Keys"].items():
+			key, mod = Gtk.accelerator_parse(value)
+			self.accelerators.connect(key, mod, Gtk.AccelFlags.VISIBLE, getattr(self, "_on_%s_key" % keyname))
+
 		# signals
-		self.connect("key-press-event", self._on_key_press)
 		self.connect("delete-event", self.hide_history)
 		self.search.connect("activate", self.on_search_activated)
-		self.treeview.connect("row_activated", self.on_item_activated)
+		self.treeview.connect("row-activated", self.on_item_activated)
 		self.clipboard.connect("owner-change", self.on_buffer_change)
 
 		if self.autosave > 0:
 			GLib.timeout_add(self.autosave, self.save_history)
 
-	def _on_key_press(self, widget, event):
-		if event.keyval == Gdk.KEY_Escape:
-			if not self.search_text:
-				self.hide_history()
-			else:
-				self.search.set_text("")
-				self.on_search_activated()
-		elif event.keyval == Gdk.KEY_f and (event.state & Gdk.ModifierType.CONTROL_MASK):
-			self.search.grab_focus()
-		elif event.keyval == Gdk.KEY_Delete:
-			self._delete_item()
+	def _on_down_key(self, *args):
+		self.treeview.emit("move-cursor", Gtk.MovementStep.DISPLAY_LINES, 1)
+
+	def _on_up_key(self, *args):
+		self.treeview.emit("move-cursor", Gtk.MovementStep.DISPLAY_LINES, -1)
+
+	def _on_escape_key(self, *args):
+		if not self.search_text:
+			self.hide_history()
+		else:
+			self.search.set_text("")
+			self.on_search_activated()
+
+	def _on_search_key(self, *args):
+		self.search.grab_focus()
+
+	def _on_delete_key(self, *args):
+		self._delete_item()
 
 	def _delete_item(self):
 		model, treeiter = self.selection.get_selected()
