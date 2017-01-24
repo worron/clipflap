@@ -173,6 +173,12 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		else:
 			return self.search_text.lower() in model[treeiter][0].lower()
 
+	def toggle(self):
+		if not self.get_visible():
+			self.show_history()
+		else:
+			self.hide_history()
+
 	def show_history(self):
 		self._rebuild_store()
 		self._place_on_center()  # temporary fix
@@ -249,10 +255,10 @@ class Clipboard(Gtk.Application):
 		self.menu.popup(None, None, None, icon, button, time)
 
 	def on_tray_left_click(self, *args):
-		self.window.show_history()
+		self.window.toggle()
 
 	def on_show(self, *args):
-		self.window.show_history()
+		self.window.toggle()
 
 	def on_clear(self, *args):
 		self.window.data = []
