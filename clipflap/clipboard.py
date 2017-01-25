@@ -61,9 +61,6 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		self.set_skip_taskbar_hint(True)
 		self.set_keep_above(True)
 
-		screen = self.get_screen()
-		self.move((screen.get_width() - self.size[0]) / 2, (screen.get_height() - self.size[0]) / 2)
-
 		# clipboard
 		self.clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 
@@ -83,34 +80,54 @@ class HistoryWindow(Gtk.ApplicationWindow):
 
 		# search
 		self.search = Gtk.SearchEntry()
+		self.search.set_size_request(self.size[0] - 20, -1)  # fix this
+		self.searchbar = Gtk.SearchBar()
+		self.searchbar.add(self.search)
 
 		# pack
 		box = Gtk.Box(spacing=12, orientation=Gtk.Orientation.VERTICAL, margin=4)
-		box.pack_start(self.search, False, True, 0)
+		box.pack_start(self.searchbar, False, True, 0)
 		box.pack_end(self.scrollable, True, True, 0)
 		self.add(box)
 
+		# accelerators
+		self.accelerators = Gtk.AccelGroup()
+		self.add_accel_group(self.accelerators)
+		for keyname, value in self.config["Keys"].items():
+			key, mod = Gtk.accelerator_parse(value)
+			self.accelerators.connect(key, mod, Gtk.AccelFlags.VISIBLE, getattr(self, "_on_%s_key" % keyname))
+
 		# signals
-		self.connect("key-press-event", self._on_key_press)
 		self.connect("delete-event", self.hide_history)
 		self.search.connect("activate", self.on_search_activated)
-		self.treeview.connect("row_activated", self.on_item_activated)
+		self.treeview.connect("row-activated", self.on_item_activated)
 		self.clipboard.connect("owner-change", self.on_buffer_change)
 
 		if self.autosave > 0:
 			GLib.timeout_add(self.autosave, self.save_history)
 
-	def _on_key_press(self, widget, event):
-		if event.keyval == Gdk.KEY_Escape:
-			if not self.search_text:
-				self.hide_history()
-			else:
-				self.search.set_text("")
-				self.on_search_activated()
-		elif event.keyval == Gdk.KEY_f and (event.state & Gdk.ModifierType.CONTROL_MASK):
+	def _on_down_key(self, *args):
+		self.treeview.emit("move-cursor", Gtk.MovementStep.DISPLAY_LINES, 1)
+
+	def _on_up_key(self, *args):
+		self.treeview.emit("move-cursor", Gtk.MovementStep.DISPLAY_LINES, -1)
+
+	def _on_escape_key(self, *args):
+		if not self.search_text:
+			self.hide_history()
+		else:
+			self.search.set_text("")
+			self.on_search_activated()
+			self.searchbar.set_search_mode(False)
+
+	def _on_search_key(self, *args):
+		if not self.searchbar.get_search_mode():
+			self.searchbar.set_search_mode(True)
+		else:
 			self.search.grab_focus()
-		elif event.keyval == Gdk.KEY_Delete:
-			self._delete_item()
+
+	def _on_delete_key(self, *args):
+		self._delete_item()
 
 	def _delete_item(self):
 		model, treeiter = self.selection.get_selected()
@@ -129,6 +146,10 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		self.treeview.set_model(self.filtered)
 		if len(self.filtered) > 0:
 			self.treeview.set_cursor(0)
+
+	def _place_on_center(self):
+		screen = self.get_screen()
+		self.move((screen.get_width() - self.size[0]) / 2, (screen.get_height() - self.size[0]) / 2)
 
 	def on_buffer_change(self, clipboard, event):
 		text = self.clipboard.wait_for_text()
@@ -159,12 +180,22 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		else:
 			return self.search_text.lower() in model[treeiter][0].lower()
 
+	def toggle(self):
+		if not self.get_visible():
+			self.show_history()
+		else:
+			self.hide_history()
+
 	def show_history(self):
 		self._rebuild_store()
+		self._place_on_center()  # temporary fix
 		self.show_all()
 		self.treeview.grab_focus()
 
 	def hide_history(self, *args):
+		self.search.set_text("")
+		self.on_search_activated()
+		self.searchbar.set_search_mode(False)
 		self.hide()
 		return True
 
@@ -181,7 +212,7 @@ class HistoryWindow(Gtk.ApplicationWindow):
 class Clipboard(Gtk.Application):
 	"""Clipboard history application"""
 	def __init__(self):
-		super().__init__(flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE, application_id="apps.clipflap")
+		super().__init__(flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE, application_id="com.github.worron.clipflap")
 		self.window = None
 
 		# command line args
@@ -234,10 +265,10 @@ class Clipboard(Gtk.Application):
 		self.menu.popup(None, None, None, icon, button, time)
 
 	def on_tray_left_click(self, *args):
-		self.window.show_history()
+		self.window.toggle()
 
 	def on_show(self, *args):
-		self.window.show_history()
+		self.window.toggle()
 
 	def on_clear(self, *args):
 		self.window.data = []
