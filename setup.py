@@ -13,7 +13,7 @@ from setuptools import setup
 
 setup(
 	name = "clipflap",
-	version = "1.1.dev1",
+	version = "1.2.dev1",
 	description = "Clipboard history widget",
 	LICENSE = "GPL",
 	author = "worron",

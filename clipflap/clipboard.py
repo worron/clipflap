@@ -202,6 +202,7 @@ class HistoryWindow(Gtk.ApplicationWindow):
 	def save_history(self):
 		with open(self.datafile, "wb") as fp:
 			pickle.dump(self.data, fp)
+		return True
 
 	def load_history(self):
 		if os.path.isfile(self.datafile):
