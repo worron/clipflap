@@ -7,8 +7,10 @@ import pickle
 import shutil
 from configparser import ConfigParser
 
+# noinspection PyPackageRequirements
 import gi
 gi.require_version("Gtk", "3.0")
+# noinspection PyPackageRequirements,PyPep8
 from gi.repository import Gtk, Gdk, GLib, Gio, Pango
 
 
@@ -93,9 +95,9 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		# accelerators
 		self.accelerators = Gtk.AccelGroup()
 		self.add_accel_group(self.accelerators)
-		for keyname, value in self.config["Keys"].items():
+		for key_name, value in self.config["Keys"].items():
 			key, mod = Gtk.accelerator_parse(value)
-			self.accelerators.connect(key, mod, Gtk.AccelFlags.VISIBLE, getattr(self, "_on_%s_key" % keyname))
+			self.accelerators.connect(key, mod, Gtk.AccelFlags.VISIBLE, getattr(self, "_on_%s_key" % key_name))
 
 		# signals
 		self.connect("delete-event", self.hide_history)
@@ -106,12 +108,15 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		if self.autosave > 0:
 			GLib.timeout_add(self.autosave, self.save_history)
 
+	# noinspection PyUnusedLocal
 	def _on_down_key(self, *args):
 		self.treeview.emit("move-cursor", Gtk.MovementStep.DISPLAY_LINES, 1)
 
+	# noinspection PyUnusedLocal
 	def _on_up_key(self, *args):
 		self.treeview.emit("move-cursor", Gtk.MovementStep.DISPLAY_LINES, -1)
 
+	# noinspection PyUnusedLocal
 	def _on_escape_key(self, *args):
 		if not self.search_text:
 			self.hide_history()
@@ -120,12 +125,14 @@ class HistoryWindow(Gtk.ApplicationWindow):
 			self.on_search_activated()
 			self.searchbar.set_search_mode(False)
 
+	# noinspection PyUnusedLocal
 	def _on_search_key(self, *args):
 		if not self.searchbar.get_search_mode():
 			self.searchbar.set_search_mode(True)
 		else:
 			self.search.grab_focus()
 
+	# noinspection PyUnusedLocal
 	def _on_delete_key(self, *args):
 		self._delete_item()
 
@@ -134,9 +141,9 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		if treeiter is not None:
 			text = self.filtered[treeiter][0]
 			self.data.remove(text)
-			self._rebuild_store()
+			self.rebuild_store()
 
-	def _rebuild_store(self):
+	def rebuild_store(self):
 		self.treeview.set_model(None)
 
 		self.store.clear()
@@ -151,6 +158,7 @@ class HistoryWindow(Gtk.ApplicationWindow):
 		screen = self.get_screen()
 		self.move((screen.get_width() - self.size[0]) / 2, (screen.get_height() - self.size[0]) / 2)
 
+	# noinspection PyUnusedLocal
 	def on_buffer_change(self, clipboard, event):
 		text = self.clipboard.wait_for_text()
 		if text is not None:
@@ -159,14 +167,16 @@ class HistoryWindow(Gtk.ApplicationWindow):
 			self.data.insert(0, text)
 			if len(self.data) > self.bsize:
 				self.data = self.data[:self.bsize]
-			self._rebuild_store()
+			self.rebuild_store()
 
-	def on_item_activated(self, tree, path, colomn):
+	# noinspection PyUnusedLocal
+	def on_item_activated(self, tree, path, column):
 		treeiter = self.filtered.get_iter(path)
 		text = self.filtered[treeiter][0]
 		self.clipboard.set_text(text, -1)
 		self.hide_history()
 
+	# noinspection PyUnusedLocal
 	def on_search_activated(self, *args):
 		self.search_text = self.search.get_text()
 		self.filtered.refilter()
@@ -174,6 +184,7 @@ class HistoryWindow(Gtk.ApplicationWindow):
 			self.treeview.set_cursor(0)
 			self.treeview.grab_focus()
 
+	# noinspection PyUnusedLocal
 	def store_filter_func(self, model, treeiter, data):
 		if not self.search_text:
 			return True
@@ -187,11 +198,12 @@ class HistoryWindow(Gtk.ApplicationWindow):
 			self.hide_history()
 
 	def show_history(self):
-		self._rebuild_store()
+		self.rebuild_store()
 		self._place_on_center()  # temporary fix
 		self.show_all()
 		self.treeview.grab_focus()
 
+	# noinspection PyUnusedLocal
 	def hide_history(self, *args):
 		self.search.set_text("")
 		self.on_search_activated()
@@ -221,6 +233,7 @@ class Clipboard(Gtk.Application):
 		self.add_main_option("clear", 0, GLib.OptionFlags.NONE, GLib.OptionArg.NONE, "Clear buffer history", None)
 		self.add_main_option("quit", 0, GLib.OptionFlags.NONE, GLib.OptionArg.NONE, "Exit program", None)
 
+	# noinspection PyAttributeOutsideInit
 	def do_startup(self):
 		Gtk.Application.do_startup(self)
 
@@ -229,12 +242,12 @@ class Clipboard(Gtk.Application):
 		icon_theme = Gtk.IconTheme.get_default()
 		if icon_theme.has_icon(icon_name):
 			tray_pb = icon_theme.load_icon(icon_name, 48, 0)
-			self.trayicon = Gtk.StatusIcon(pixbuf=tray_pb)
+			self.tray_icon = Gtk.StatusIcon(pixbuf=tray_pb)
 		else:
-			self.trayicon = Gtk.StatusIcon(stock=Gtk.STOCK_EDIT)
+			self.tray_icon = Gtk.StatusIcon(stock=Gtk.STOCK_EDIT)
 
-		self.trayicon.connect('popup-menu', self.on_tray_right_click)
-		self.trayicon.connect('activate', self.on_tray_left_click)
+		self.tray_icon.connect('popup-menu', self.on_tray_right_click)
+		self.tray_icon.connect('activate', self.on_tray_left_click)
 
 		# menu
 		self.menu = Gtk.Menu()
@@ -265,16 +278,20 @@ class Clipboard(Gtk.Application):
 	def on_tray_right_click(self, icon, button, time):
 		self.menu.popup(None, None, None, icon, button, time)
 
+	# noinspection PyUnusedLocal
 	def on_tray_left_click(self, *args):
 		self.window.toggle()
 
+	# noinspection PyUnusedLocal
 	def on_show(self, *args):
 		self.window.toggle()
 
+	# noinspection PyUnusedLocal
 	def on_clear(self, *args):
 		self.window.data = []
-		self.window._rebuild_store()
+		self.window.rebuild_store()
 
+	# noinspection PyUnusedLocal
 	def on_quit(self, *args):
 		self.quit()
 
